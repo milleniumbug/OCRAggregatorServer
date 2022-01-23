@@ -20,14 +20,14 @@ def create_darknet_detector():
 
     def detect(image_file):
         result = detector.detect(image_file)
-        return [(x1 - 10, y1 - 10, x2 + 10, y2 + 10) for x1, y1, x2, y2 in result]
+        return [(x1 - 10, y1 - 10, x2 + 10, y2 + 10) for x1, y1, x2, y2 in sorted(result, key=lambda d: d[1])]
 
     return detect
 
 
 def create_manga_ocr():
     from manga_ocr import MangaOcr
-    mocr = MangaOcr()
+    mocr = MangaOcr(force_cpu=True)
 
     def ocr(image_file):
         with PIL.Image.open(image_file) as image:
@@ -86,7 +86,7 @@ def create_engines(ocr_mode: str, detector_mode: str, combined_mode: Union[str, 
     if combined_mode is None:
         combined_detector_ocr = create_combined_detector_ocr(ocr, detector)
 
-    return ocr_mode, detector, combined_detector_ocr
+    return ocr, detector, combined_detector_ocr
 
 
 def create_app(ocr, detector, combined_detector_ocr, config=None):
@@ -132,7 +132,7 @@ def main():
         args.detection_mode,
         args.combined_detection_ocr_mode)
     created_app = create_app(ocr, detector, combined_detector_ocr)
-    created_app.run(host=args.host, port=args.port)
+    created_app.run(host=args.host, port=args.port, use_reloader=False)
 
 
 if __name__ == "__main__":
