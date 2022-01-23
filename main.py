@@ -36,6 +36,23 @@ def create_manga_ocr():
     return ocr
 
 
+def create_tesseract_ocr():
+    import pytesseract
+
+    def ocr(image_file):
+        with PIL.Image.open(image_file) as image:
+            if image.width < image.height:
+                lang = 'jpn+jpn_vert'
+                config = '--psm 5'
+            else:
+                lang = 'jpn+jpn_vert'
+                config = '--psm 6'
+            text = pytesseract.pytesseract.image_to_string(image, lang='jpn+jpn_vert', config=config)
+            return text
+
+    return ocr
+
+
 def create_combined_detector_ocr(ocr, detector):
     def combined(image_file):
         with io.BytesIO(image_file.read()) as buffered:
@@ -56,6 +73,8 @@ def create_combined_detector_ocr(ocr, detector):
 def create_engines(ocr_mode: str, detector_mode: str, combined_mode: Union[str, None]):
     if ocr_mode == 'manga-ocr':
         ocr = create_manga_ocr()
+    elif ocr_mode == 'tesseract':
+        ocr = create_tesseract_ocr()
     else:
         ocr = None
 
