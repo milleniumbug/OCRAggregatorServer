@@ -27,7 +27,7 @@ def create_darknet_detector(detection_sorter):
 
     def detect(image_file):
         result = detector.detect(image_file)
-        return [(x1 - 10, y1 - 10, x2 + 10, y2 + 10) for x1, y1, x2, y2 in detection_sorter(result)]
+        return [(x1 - 10, y1 - 10, x2 + 10, y2 + 10) for x1, y1, x2, y2 in detection_sorter(image_file, result)]
 
     return detect
 
