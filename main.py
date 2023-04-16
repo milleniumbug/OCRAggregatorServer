@@ -34,11 +34,11 @@ def create_darknet_detector(detection_sorter):
 
 def create_manga_ocr():
     from manga_ocr import MangaOcr
-    mocr = MangaOcr()
+    mocr = MangaOcr(force_cpu=True)
 
     def ocr(image_file):
         with PIL.Image.open(image_file) as image:
-            return mocr(image)
+            return mocr(image).replace("．．．", "…")
 
     return ocr
 
@@ -56,6 +56,19 @@ def create_tesseract_ocr():
                 config = '--psm 6'
             text = pytesseract.pytesseract.image_to_string(image, lang='jpn+jpn_vert', config=config)
             return text
+
+    return ocr
+
+
+def create_ryou_ocr():
+    import base64
+    import requests
+
+    def ocr(image_file):
+        imageBase64 = base64.b64encode(image_file.read()).decode('ascii')
+        r = requests.post(url='http://192.168.1.122:9846/api/ocr', json={ 'type': 'japanese', 'image': imageBase64 })
+        text = "\n".join(r.json()['Lines'])
+        return text
 
     return ocr
 
@@ -89,6 +102,8 @@ def create_engines(
         ocr = create_manga_ocr()
     elif ocr_mode == 'tesseract':
         ocr = create_tesseract_ocr()
+    elif ocr_mode == 'ryou':
+        ocr = create_ryou_ocr()
     else:
         ocr = None
 

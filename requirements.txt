@@ -6,3 +6,4 @@ Pillow~=9.0.0
 opencv-python~=4.5.5.62
 np~=1.0.2
 pytesseract
+requests
