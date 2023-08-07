@@ -20,19 +20,19 @@ jobs:
             CUDA_PATH: ""
             CUDA_TOOLKIT_ROOT_DIR: ""
             LD_LIBRARY_PATH: ""
-            darknet_build_args: "-UseVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
+            darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
           - os: macOS-latest
             CUDACXX: ""
             CUDA_PATH: ""
             CUDA_TOOLKIT_ROOT_DIR: ""
             LD_LIBRARY_PATH: ""
-            darknet_build_args: "-UseVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
+            darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
           - os: ubuntu-latest
             CUDACXX: "/usr/local/cuda/bin/nvcc"
             CUDA_PATH: "/usr/local/cuda"
             CUDA_TOOLKIT_ROOT_DIR: "/usr/local/cuda"
             LD_LIBRARY_PATH: "/usr/local/cuda/lib64:/usr/local/cuda/lib64/stubs:$LD_LIBRARY_PATH"
-            darknet_build_args: "-UseVCPKG -DoNotUpdateVCPKG -EnableOPENCV -EnableCUDA -EnableCUDNN"
+            darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV -EnableCUDA -EnableCUDNN"
 
     steps:
       - uses: actions/checkout@v3
@@ -61,7 +61,7 @@ jobs:
         id: runvcpkg
         with:
           # This specifies the location of vcpkg, where it is going to be restored from cache, or create from scratch.
-          vcpkgDirectory: '${{ github.workspace }}/b/vcpkg'
+          vcpkgDirectory: '${{ github.workspace }}/darknet/vcpkg'
           # The Git commit id of vcpkg to be checked out. This is only needed because we are not using a submodule.
           vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
           # The vcpkg.json file, which will be part of cache key computation.
