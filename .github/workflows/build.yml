@@ -91,7 +91,7 @@ jobs:
           CUDA_PATH: "${{ matrix.CUDA_PATH }}"
           CUDA_TOOLKIT_ROOT_DIR: "${{ matrix.CUDA_TOOLKIT_ROOT_DIR }}"
           LD_LIBRARY_PATH: "${{ matrix.LD_LIBRARY_PATH }}"
-        run: ${{ github.workspace }}/build.ps1 ${{ matrix.darknet_build_args }} -DisableInteractive -DoNotUpdateTOOL
+        run: ${{ github.workspace }}/darknet/build.ps1 ${{ matrix.darknet_build_args }} -DisableInteractive -DoNotUpdateTOOL
 
       - name: Copy Darknet
         shell: pwsh
