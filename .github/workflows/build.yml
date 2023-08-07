@@ -1,0 +1,123 @@
+name: Test on GH actions environment
+
+on: 
+  - push
+  - pull_request
+
+env:
+  py: "3.10"
+  vcpkgCommitId: 'c9f906558f9bb12ee9811d6edc98ec9255c6cda5'
+
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: windows-latest
+            CUDACXX: ""
+            CUDA_PATH: ""
+            CUDA_TOOLKIT_ROOT_DIR: ""
+            LD_LIBRARY_PATH: ""
+            darknet_build_args: "-UseVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
+          - os: macOS-latest
+            CUDACXX: ""
+            CUDA_PATH: ""
+            CUDA_TOOLKIT_ROOT_DIR: ""
+            LD_LIBRARY_PATH: ""
+            darknet_build_args: "-UseVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
+          - os: ubuntu-latest
+            CUDACXX: "/usr/local/cuda/bin/nvcc"
+            CUDA_PATH: "/usr/local/cuda"
+            CUDA_TOOLKIT_ROOT_DIR: "/usr/local/cuda"
+            LD_LIBRARY_PATH: "/usr/local/cuda/lib64:/usr/local/cuda/lib64/stubs:$LD_LIBRARY_PATH"
+            darknet_build_args: "-UseVCPKG -DoNotUpdateVCPKG -EnableOPENCV -EnableCUDA -EnableCUDNN"
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: checkout-darknet
+        uses: actions/checkout@v3
+        with:
+          path: darknet
+          repository: AlexeyAB/darknet
+          ref: d2c3788539bb73d3cfcdb7a1d5fa6b29ae1ec0e1
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.py }}
+
+      - uses: lukka/get-cmake@latest
+      - name: Dump the content of $RUNNER_TEMP
+        run: find $RUNNER_TEMP
+        shell: bash
+      - name: Dump the content of $RUNNER_WORKSPACE
+        run: find $RUNNER_WORKSPACE
+        shell: bash
+
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@main
+        id: runvcpkg
+        with:
+          # This specifies the location of vcpkg, where it is going to be restored from cache, or create from scratch.
+          vcpkgDirectory: '${{ github.workspace }}/b/vcpkg'
+          # The Git commit id of vcpkg to be checked out. This is only needed because we are not using a submodule.
+          vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
+          # The vcpkg.json file, which will be part of cache key computation.
+          vcpkgJsonGlob: '**/darknet/vcpkg.json'
+
+      - name: Prints output of run-vcpkg's action
+        run: echo "root='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}', triplet='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_DEFAULT_TRIPLET_OUT }}'"
+      - name: Update apt and install deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev
+  
+      - name: Install CUDA
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          ${{ github.workspace }}/darknet/scripts/deploy-cuda.sh
+          source ${{ github.workspace }}/darknet/scripts/requested_cuda_version.sh
+          sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so.1
+          sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so.1
+          sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so
+  
+      - name: 'Build Darknet'
+        shell: pwsh
+        env:
+          CUDACXX: "${{ matrix.CUDACXX }}"
+          CUDA_PATH: "${{ matrix.CUDA_PATH }}"
+          CUDA_TOOLKIT_ROOT_DIR: "${{ matrix.CUDA_TOOLKIT_ROOT_DIR }}"
+          LD_LIBRARY_PATH: "${{ matrix.LD_LIBRARY_PATH }}"
+        run: ${{ github.workspace }}/build.ps1 ${{ matrix.darknet_build_args }} -DisableInteractive -DoNotUpdateTOOL
+
+      - name: Copy Darknet
+        shell: pwsh
+        if: matrix.os != 'windows-latest'
+        run:
+          cp ${{ github.workspace }}/darknet/libdarknet.* ${{ github.workspace }}
+
+      - name: Copy Darknet
+        shell: pwsh
+        if: matrix.os == 'windows-latest'
+        run:
+          cp ${{ github.workspace }}/darknet/darknet.dll ${{ github.workspace }}
+    
+      - name: Build Standalone binary
+        run: |
+          python -m venv venv
+          venv/Scripts/activate.ps1
+          python -m pip install -r requirements.txt
+          python -m pip install .
+          python -m pip install pyinstaller
+          pyinstaller --clean --additional-hooks-dir hooks --name "ocr_aggregator_server" standalone.py
+          deactivate
+          Remove-Item venv -Recurse -Force
+        shell: pwsh
+
+      - uses: actions/upload-artifact@v2
+        with:
+          name: ocr_aggregator_server_${{ matrix.os }}
+          path: dist\aqt*

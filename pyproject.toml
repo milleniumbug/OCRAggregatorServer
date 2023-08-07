@@ -1,0 +1,28 @@
+[project]
+name = "ocr_aggregator_server"
+authors = [
+    {name = "millenniumbug", email = "millenniumbug@gmail.com"},
+]
+description = "OCR Aggretgator server for Magic Translatior"
+requires-python = ">=3.7"
+license = {text = "MIT"}
+classifiers = [
+    "Framework :: Django",
+    "Programming Language :: Python :: 3",
+]
+dependencies = [
+    "pytest>=3.0.7",
+    "Flask>=2.0.2",
+    "flask-cors>=3.0.10",
+    "manga-ocr>=0.1.4",
+    "Pillow~=9.0.0",
+    "opencv-python~=4.5.5.62",
+    "np~=1.0.2",
+    "pytesseract",
+    "requests",
+]
+dynamic = ["version"]
+
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = ["setuptools", "wheel"]

@@ -1,13 +1,17 @@
 import ctypes
 import os
-
+import platform
 
 def load_darknet_detector():
-    if os.name == "posix":
-        cwd = os.path.dirname(__file__)
+    # check if macos
+    cwd = os.path.dirname(__file__)
+    if platform.system() == "Darwin":
+        os.environ['DYLD_LIBRARY_PATH'] = os.path.dirname(__file__)
+        lib = ctypes.CDLL(cwd + "/libdarknet.dylib", ctypes.RTLD_GLOBAL)
+    # check if linux
+    elif os.name == "posix":
         lib = ctypes.CDLL(cwd + "/libdarknet.so", ctypes.RTLD_GLOBAL)
     elif os.name == "nt":
-        cwd = os.path.dirname(__file__)
         os.environ['PATH'] = cwd + ';' + os.environ['PATH']
         lib = ctypes.CDLL("darknet.dll", ctypes.RTLD_GLOBAL)
     else:
