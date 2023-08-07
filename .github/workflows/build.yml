@@ -6,13 +6,14 @@ on:
 
 env:
   py: "3.10"
-  vcpkgCommitId: 'c9f906558f9bb12ee9811d6edc98ec9255c6cda5'
+  vcpkgCommitId: '500c6f2b85e14411fe56a093ed5cd77177a6bfa9'
 
 
 jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: windows-latest
@@ -49,13 +50,6 @@ jobs:
           python-version: ${{ env.py }}
 
       - uses: lukka/get-cmake@latest
-      - name: Dump the content of $RUNNER_TEMP
-        run: find $RUNNER_TEMP
-        shell: bash
-      - name: Dump the content of $RUNNER_WORKSPACE
-        run: find $RUNNER_WORKSPACE
-        shell: bash
-
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@main
         id: runvcpkg
@@ -67,8 +61,10 @@ jobs:
           # The vcpkg.json file, which will be part of cache key computation.
           vcpkgJsonGlob: '**/darknet/vcpkg.json'
 
-      - name: Prints output of run-vcpkg's action
-        run: echo "root='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_ROOT_OUT }}', triplet='${{ steps.runvcpkg.outputs.RUNVCPKG_VCPKG_DEFAULT_TRIPLET_OUT }}'"
+      - name: Install deps
+        run: brew install libomp yasm nasm pkg-config
+        if: matrix.os == 'macOS-latest'
+
       - name: Update apt and install deps
         if: matrix.os == 'ubuntu-latest'
         run: |
