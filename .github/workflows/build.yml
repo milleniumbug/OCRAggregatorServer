@@ -58,16 +58,6 @@ jobs:
         run: brew install libomp yasm nasm pkg-config 7zip wget
         if: matrix.os == 'macOS-latest'
 
-  
-      # - name: Install CUDA
-      #   if: matrix.os == 'ubuntu-latest'
-      #   run: |
-      #     ${{ github.workspace }}/darknet/scripts/deploy-cuda.sh
-      #     source ${{ github.workspace }}/darknet/scripts/requested_cuda_version.sh
-      #     sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so.1
-      #     sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so.1
-      #     sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so
-
       - uses: Jimver/cuda-toolkit@v0.2.11
         if: matrix.os != 'macOS-latest'
         id: cuda-toolkit
@@ -76,6 +66,7 @@ jobs:
           cuda: '11.7.0'
       
       # The previous action adds the apt repository for cuda, but it doesn't install cudnn, so we need to do it manually
+      # We also run out of space on ubuntu if we don't do an apt-get clean after installing
       - name: Update apt and install deps
         if: matrix.os == 'ubuntu-latest'
         run: |
@@ -86,6 +77,7 @@ jobs:
           sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so.1
           sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so.1
           sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so
+          sudo apt-get clean
 
       - name: 'Build Darknet'
         shell: pwsh
