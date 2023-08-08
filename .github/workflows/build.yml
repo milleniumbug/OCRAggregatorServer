@@ -58,11 +58,6 @@ jobs:
         run: brew install libomp yasm nasm pkg-config
         if: matrix.os == 'macOS-latest'
 
-      - name: Update apt and install deps
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          sudo apt update
-          sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common wget zlib1g
   
       # - name: Install CUDA
       #   if: matrix.os == 'ubuntu-latest'
@@ -74,9 +69,23 @@ jobs:
       #     sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so
 
       - uses: Jimver/cuda-toolkit@v0.2.11
+        if: matrix.os != 'macOS-latest'
         id: cuda-toolkit
         with:
+          method: network
           cuda: '11.7.0'
+      
+      # The previous action adds the apt repository for cuda, but it doesn't install cudnn, so we need to do it manually
+      - name: Update apt and install deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common wget zlib1g
+          sudo apt-get install -y libcudnn8-dev libcudnn8
+          source ${{ github.workspace }}/scripts/requested_cuda_version.sh
+          sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so.1
+          sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so.1
+          sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so
 
       - name: 'Build Darknet'
         shell: pwsh
