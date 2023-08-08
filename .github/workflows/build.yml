@@ -105,9 +105,10 @@ jobs:
           cp ${{ github.workspace }}/darknet/darknet.dll ${{ github.workspace }}
           choco install --yes 7zip wget
           
-    
+      # We have to remove Darknet folder here because we otherwise run out of space on Windows
       - name: Build Standalone binary
         run: |
+          Remove-Item -Recurse -Force ${{ github.workspace }}/darknet
           python -m venv venv
           venv/${{matrix.venv_scripts_dir}}/Activate.ps1
           python -m pip install -r requirements.txt
