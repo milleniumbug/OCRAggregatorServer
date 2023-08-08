@@ -24,6 +24,7 @@ jobs:
             CUDA_PATH: ""
             CUDA_TOOLKIT_ROOT_DIR: ""
             LD_LIBRARY_PATH: ""
+            venv_scripts_dir: "Scripts"
             # darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV -EnableCUDA -EnableCUDNN"
             darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
           - os: macOS-latest
@@ -31,12 +32,14 @@ jobs:
             CUDA_PATH: ""
             CUDA_TOOLKIT_ROOT_DIR: ""
             LD_LIBRARY_PATH: ""
+            venv_scripts_dir: "bin"
             darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
           - os: ubuntu-latest
             CUDACXX: "/usr/local/cuda/bin/nvcc"
             CUDA_PATH: "/usr/local/cuda"
             CUDA_TOOLKIT_ROOT_DIR: "/usr/local/cuda"
             LD_LIBRARY_PATH: "/usr/local/cuda/lib64:/usr/local/cuda/lib64/stubs:$LD_LIBRARY_PATH"
+            venv_scripts_dir: "bin"
             darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV -EnableCUDA -EnableCUDNN"
 
     steps:
@@ -114,7 +117,7 @@ jobs:
       - name: Build Standalone binary
         run: |
           python -m venv venv
-          venv/bin/Activate.ps1
+          venv/${{matrix.venv_scripts_dir}}/Activate.ps1
           python -m pip install -r requirements.txt
           python -m pip install .
           python -m pip install pyinstaller
