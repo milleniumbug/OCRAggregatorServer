@@ -55,11 +55,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ env.py }}
-      - name: TEST python venv
-        run: |
-          python -m venv venv
-          venv/${{matrix.venv_scripts_dir}}/Activate.ps1
-        shell: pwsh
 
       - uses: lukka/get-cmake@latest
       - name: Setup vcpkg
@@ -130,4 +125,4 @@ jobs:
         continue-on-error: true
         with:
           name: ocr_aggregator_server_${{ matrix.os }}
-          path: dist\ocr_aggregator_server
+          path: ${{ github.workspace }}/dist/ocr_aggregator_server
