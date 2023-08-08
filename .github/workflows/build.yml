@@ -103,6 +103,8 @@ jobs:
         if: matrix.os == 'windows-latest'
         run: |
           cp ${{ github.workspace }}/darknet/darknet.dll ${{ github.workspace }}
+          choco install --yes 7zip wget
+          
     
       - name: Build Standalone binary
         run: |
