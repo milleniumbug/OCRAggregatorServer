@@ -5,7 +5,7 @@ on:
   - pull_request
 
 env:
-  py: "3.10"
+  py: "3.9"
   vcpkgCommitId: '500c6f2b85e14411fe56a093ed5cd77177a6bfa9'
 
 
@@ -55,7 +55,7 @@ jobs:
           doNotCache: false
 
       - name: Install deps
-        run: brew install libomp yasm nasm pkg-config
+        run: brew install libomp yasm nasm pkg-config 7zip wget
         if: matrix.os == 'macOS-latest'
 
   
@@ -80,7 +80,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common wget zlib1g
+          sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common wget zlib1g p7zip-full
           sudo apt-get install -y libcudnn8-dev libcudnn8
           source ${{ github.workspace }}/darknet/scripts/requested_cuda_version.sh
           sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so.1
@@ -124,7 +124,8 @@ jobs:
 
       - name: Zip artifact
         run: |
-          zip -r dist/ocr_aggregator_server_${{ matrix.os }}.zip dist/ocr_aggregator_server
+          cd ${{ github.workspace }}/dist
+          7z a -r ocr_aggregator_server_${{ matrix.os }}.zip ocr_aggregator_server
         shell: pwsh
 
       - uses: actions/upload-artifact@v2
