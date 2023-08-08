@@ -17,28 +17,13 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            # CUDA_PATH: "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.7"
-            # CUDA_TOOLKIT_ROOT_DIR: "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.7"
-            # CUDACXX: "C:\\Program Files\\NVIDIA GPU Computing Toolkit\\CUDA\\v11.7\\bin\\nvcc.exe"
-            CUDACXX: ""
-            CUDA_PATH: ""
-            CUDA_TOOLKIT_ROOT_DIR: ""
-            LD_LIBRARY_PATH: ""
             venv_scripts_dir: "Scripts"
             # darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV -EnableCUDA -EnableCUDNN"
             darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
           - os: macOS-latest
-            CUDACXX: ""
-            CUDA_PATH: ""
-            CUDA_TOOLKIT_ROOT_DIR: ""
-            LD_LIBRARY_PATH: ""
             venv_scripts_dir: "bin"
             darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
           - os: ubuntu-latest
-            CUDACXX: "/usr/local/cuda/bin/nvcc"
-            CUDA_PATH: "/usr/local/cuda"
-            CUDA_TOOLKIT_ROOT_DIR: "/usr/local/cuda"
-            LD_LIBRARY_PATH: "/usr/local/cuda/lib64:/usr/local/cuda/lib64/stubs:$LD_LIBRARY_PATH"
             venv_scripts_dir: "bin"
             darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV -EnableCUDA -EnableCUDNN"
 
@@ -77,25 +62,31 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev
+          sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common wget zlib1g
   
-      - name: Install CUDA
-        if: matrix.os == 'ubuntu-latest'
-        run: |
-          ${{ github.workspace }}/darknet/scripts/deploy-cuda.sh
-          source ${{ github.workspace }}/darknet/scripts/requested_cuda_version.sh
-          sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so.1
-          sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so.1
-          sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so
-  
+      # - name: Install CUDA
+      #   if: matrix.os == 'ubuntu-latest'
+      #   run: |
+      #     ${{ github.workspace }}/darknet/scripts/deploy-cuda.sh
+      #     source ${{ github.workspace }}/darknet/scripts/requested_cuda_version.sh
+      #     sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so.1
+      #     sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so.1
+      #     sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so
+
+      - uses: Jimver/cuda-toolkit@v0.2.11
+        id: cuda-toolkit
+        with:
+          cuda: '11.7.0'
+
       - name: 'Build Darknet'
         shell: pwsh
-        env:
-          CUDACXX: "${{ matrix.CUDACXX }}"
-          CUDA_PATH: "${{ matrix.CUDA_PATH }}"
-          CUDA_TOOLKIT_ROOT_DIR: "${{ matrix.CUDA_TOOLKIT_ROOT_DIR }}"
-          LD_LIBRARY_PATH: "${{ matrix.LD_LIBRARY_PATH }}"
-        run: ${{ github.workspace }}/darknet/build.ps1 ${{ matrix.darknet_build_args }} -DisableInteractive -DoNotUpdateTOOL
+        # env:
+        #   # CUDACXX: "${{ matrix.CUDACXX }}"
+        #   # CUDA_PATH: "${{ matrix.CUDA_PATH }}"
+        #   # CUDA_TOOLKIT_ROOT_DIR: "${{ matrix.CUDA_TOOLKIT_ROOT_DIR }}"
+        #   # LD_LIBRARY_PATH: "${{ matrix.LD_LIBRARY_PATH }}"
+        run: |
+          ${{ github.workspace }}/darknet/build.ps1 ${{ matrix.darknet_build_args }} -DisableInteractive -DoNotUpdateTOOL
 
       - name: Copy Darknet
         shell: pwsh
@@ -121,8 +112,13 @@ jobs:
           Remove-Item venv -Recurse -Force
         shell: pwsh
 
+      - name: Zip artifact
+        run: |
+          zip -r dist/ocr_aggregator_server_${{ matrix.os }}.zip dist/ocr_aggregator_server
+        shell: pwsh
+
       - uses: actions/upload-artifact@v2
         continue-on-error: true
         with:
           name: ocr_aggregator_server_${{ matrix.os }}
-          path: ${{ github.workspace }}/dist/ocr_aggregator_server
+          path: ${{ github.workspace }}/dist/ocr_aggregator_server_${{ matrix.os }}.zip
