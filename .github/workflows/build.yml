@@ -58,7 +58,7 @@ jobs:
       - name: TEST python venv
         run: |
           python -m venv venv
-          venv/bin/Activate.ps1
+          venv/${{matrix.venv_scripts_dir}}/Activate.ps1
         shell: pwsh
 
       - uses: lukka/get-cmake@latest
