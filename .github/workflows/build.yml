@@ -82,18 +82,13 @@ jobs:
           sudo apt update
           sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common wget zlib1g
           sudo apt-get install -y libcudnn8-dev libcudnn8
-          source ${{ github.workspace }}/scripts/requested_cuda_version.sh
+          source ${{ github.workspace }}/darknet/scripts/requested_cuda_version.sh
           sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so.1
           sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so.1
           sudo ln -s /usr/local/cuda-${CUDA_VERSION}/lib64/stubs/libcuda.so /usr/local/cuda-${CUDA_VERSION}/lib64/libcuda.so
 
       - name: 'Build Darknet'
         shell: pwsh
-        # env:
-        #   # CUDACXX: "${{ matrix.CUDACXX }}"
-        #   # CUDA_PATH: "${{ matrix.CUDA_PATH }}"
-        #   # CUDA_TOOLKIT_ROOT_DIR: "${{ matrix.CUDA_TOOLKIT_ROOT_DIR }}"
-        #   # LD_LIBRARY_PATH: "${{ matrix.LD_LIBRARY_PATH }}"
         run: |
           ${{ github.workspace }}/darknet/build.ps1 ${{ matrix.darknet_build_args }} -DisableInteractive -DoNotUpdateTOOL
 
