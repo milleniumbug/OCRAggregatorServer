@@ -96,8 +96,18 @@ jobs:
         run: |
           cp ${{ github.workspace }}/darknet/darknet.dll ${{ github.workspace }}
           choco install --yes 7zip wget
-          
+    
+      # We have to remove CUDA because we otherwise run out of space on Linux for some godforsaken reason
+      - name: uninstall CUDA
+        shell: pwsh
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get remove cuda* libcudnn8*
+          sudo apt-get autoremove
+          sudo apt-get clean
+    
       # We have to remove Darknet folder here because we otherwise run out of space on Windows
+      # We also need to remove the ImageTrans-Balloons-Model.zip because it's too big to keep around
       - name: Build Standalone binary
         run: |
           Remove-Item -Recurse -Force ${{ github.workspace }}/darknet
@@ -109,6 +119,7 @@ jobs:
           cd data
           wget https://github.com/nikitalita/Bubble-detection-model/releases/download/0.0.1/ImageTrans-Balloons-Model.zip
           unzip ImageTrans-Balloons-Model.zip
+          rm ImageTrans-Balloons-Model.zip
           cd ..
           pyinstaller --clean --additional-hooks-dir hooks --name "ocr_aggregator_server" standalone.py
           deactivate
