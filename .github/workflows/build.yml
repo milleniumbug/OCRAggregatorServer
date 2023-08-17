@@ -72,7 +72,8 @@ jobs:
         env:
           VCPKG_DEFAULT_TRIPLET: ${{ matrix.VCPKG_DEFAULT_TRIPLET }}
         run: |
-          pip install ${{ github.workspace }}/darknet
+          pip install cmake
+          pip install --verbose ${{ github.workspace }}/darknet
 
       - name: Build Standalone binary
         run: |
