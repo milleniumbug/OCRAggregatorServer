@@ -18,15 +18,19 @@ def create_y_coordinate_sorter():
 
 
 def create_darknet_detector(detection_sorter):
-    import darknet
-    Detector = darknet.load_darknet_detector()
-    detector = Detector(
+    import libdarknetpy as m
+    detector = m.Detector(
         'data/model.cfg',
         'data/model.weights',
-        0)
+        0, 
+        1)
+    def process_detection(result):
+        return [(box.x, box.y, box.x + box.w, box.y + box.h) for box in result]
 
     def detect(image_file):
-        result = detector.detect(image_file)
+        bytes_read = image_file.read()
+        input_image = list(bytes_read)
+        result = process_detection(detector.detect_raw(input_image))
         return [(x1 - 10, y1 - 10, x2 + 10, y2 + 10) for x1, y1, x2, y2 in detection_sorter(image_file, result)]
 
     return detect
