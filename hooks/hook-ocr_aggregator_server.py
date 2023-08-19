@@ -13,12 +13,6 @@ datas = [
     ("data", "data"),
 ]
 
-#check if windows
-if platform.system() == "Windows":
-    datas += [("darknet.dll", ".")]
-else:
-    datas += [("libdarknet*", ".")]
-
 binaries = []
 hiddenimports = [
     "tqdm",
