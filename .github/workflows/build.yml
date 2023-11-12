@@ -67,18 +67,20 @@ jobs:
           sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common wget zlib1g p7zip-full
           sudo apt-get clean
 
-      - name: 'Build libdarknetpy'
-        shell: pwsh
-        env:
-          VCPKG_DEFAULT_TRIPLET: ${{ matrix.VCPKG_DEFAULT_TRIPLET }}
-        run: |
-          pip install cmake
-          pip install --verbose ${{ github.workspace }}/libdarknetpy
+      # - name: 'Build libdarknetpy'
+      #   shell: pwsh
+      #   env:
+      #     VCPKG_DEFAULT_TRIPLET: ${{ matrix.VCPKG_DEFAULT_TRIPLET }}
+      #   run: |
+      #     pip install cmake
+      #     pip install --verbose ${{ github.workspace }}/libdarknetpy
 
       - name: Build Standalone binary
         run: |
           python -m venv venv
           venv/${{matrix.venv_scripts_dir}}/Activate.ps1
+          python -m pip install cmake
+          pip install --verbose ${{ github.workspace }}/libdarknetpy
           python -m pip install -r requirements.txt
           python -m pip install .
           python -m pip install pyinstaller
