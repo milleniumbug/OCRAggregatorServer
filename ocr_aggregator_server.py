@@ -8,7 +8,25 @@ import PIL.Image
 import io
 import cv2
 import np
+import os
+import libdarknetpy as m
 
+#find the data directory
+cur_dir = os.path.dirname(os.path.realpath(__file__))
+data_dir = os.path.join(cur_dir, "data")
+if os.path.exists(data_dir) and os.path.isdir(data_dir):
+    data_dir = data_dir
+else:
+    data_dir = os.path.join(cur_dir, "_internal/data")
+    
+if os.path.exists(data_dir) and os.path.isdir(data_dir):
+    data_dir = data_dir
+else:
+    data_dir = "data"
+
+MODEL_CFG = os.path.join(data_dir, "model.cfg")
+MODEL_WEIGHTS = os.path.join(data_dir, "model.weights")
+    
 
 def create_y_coordinate_sorter():
     def sorter(image_file, detections):
@@ -20,8 +38,8 @@ def create_y_coordinate_sorter():
 def create_darknet_detector(detection_sorter):
     import libdarknetpy as m
     detector = m.Detector(
-        'data/model.cfg',
-        'data/model.weights',
+        MODEL_CFG,
+        MODEL_WEIGHTS,
         0, 
         1)
     def process_detection(result):
