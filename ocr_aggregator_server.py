@@ -28,10 +28,54 @@ MODEL_CFG = os.path.join(data_dir, "model.cfg")
 MODEL_WEIGHTS = os.path.join(data_dir, "model.weights")
     
 
-def create_y_coordinate_sorter():
-    def sorter(image_file, detections):
-        return sorted(detections, key=lambda d: d[1])
+def create_box_sorter():
+    def sorter(image_file, detections: list[tuple[int, int, int, int]]):
+        # what we need to do is to sort the detections by their y coordinate, and then their x coordinate
+        # We find all the detections that have y coordinates that overlap by more than 50% of their height
+        # We then sort those detections by their x coordinate
+        # We then repeat this process until all detections are sorted
+    
+        # first we sort the detections by their y coordinate
+        detections.sort(key=lambda x: x[1])
 
+        detection_lists :list[list[tuple]] = []
+        
+        for detection in detections:
+            added = False
+            
+            # we will iterate through the list of lists
+            for detection_list in detection_lists:
+                # we will check if the detection overlaps with any of the detections in the list
+                for detection_in_list in detection_list:
+                    # we will check if the detection overlaps with the detection in the list by more than 50 percent
+                    if (detection[1] >= detection_in_list[1] and detection[1] <= detection_in_list[3]) or (detection[3] >= detection_in_list[1] and detection[3] <= detection_in_list[3]):
+                        overlap_start = max(detection[1], detection_in_list[1])
+                        overlap_end = min(detection[3], detection_in_list[3])
+                        overlap_height = overlap_end - overlap_start
+                        detection_height = detection[3] - detection[1]
+                        detection_in_list_height = detection_in_list[3] - detection_in_list[1]
+                        if overlap_height / detection_height >= 0.5 or overlap_height / detection_in_list_height >= 0.5:
+                            detection_list.append(detection)
+                            added = True
+                            break
+                if added:
+                    break
+            
+            if not added:
+                # we have not added the detection to a list
+                # we will create a new list and add the detection to it
+                detection_lists.append([detection])
+                
+        #sort by the x2 coordinate in reverse order
+        for detection_list in detection_lists:
+            detection_list.sort(key=lambda x: x[2], reverse=True)
+            
+        # cat them all together
+        sorted_detections = []
+        for detection_list in detection_lists:
+            sorted_detections += detection_list
+        
+        return sorted_detections
     return sorter
 
 
@@ -118,7 +162,7 @@ def create_engines(
         detection_sorter_mode: str):
 
     if detection_sorter_mode == 'y_coordinate':
-        sorter = create_y_coordinate_sorter()
+        sorter = create_box_sorter()
 
     if ocr_mode == 'manga-ocr':
         ocr = create_manga_ocr()
