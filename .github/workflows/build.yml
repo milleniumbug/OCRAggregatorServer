@@ -56,6 +56,10 @@ jobs:
           doNotCache: false
 
       - name: Install deps
+        run: choco install wget 7zip
+        if: matrix.os == 'windows-latest'  
+
+      - name: Install deps
         run: brew install libomp yasm nasm pkg-config 7zip wget
         if: matrix.os == 'macOS-latest'
 
