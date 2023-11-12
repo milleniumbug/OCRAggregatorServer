@@ -34,7 +34,7 @@ jobs:
       - name: checkout libdarknetpy
         uses: actions/checkout@v3
         with:
-          path: darknet
+          path: libdarknetpy
           repository: nikitalita/libdarknetpy
 
       - name: Set up Python
@@ -48,11 +48,11 @@ jobs:
         id: runvcpkg
         with:
           # This specifies the location of vcpkg, where it is going to be restored from cache, or create from scratch.
-          vcpkgDirectory: '${{ github.workspace }}/darknet/vcpkg'
+          vcpkgDirectory: '${{ github.workspace }}/libdarknetpy/vcpkg'
           # The Git commit id of vcpkg to be checked out. This is only needed because we are not using a submodule.
           vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
           # The vcpkg.json file, which will be part of cache key computation.
-          vcpkgJsonGlob: '**/darknet/vcpkg.json'
+          vcpkgJsonGlob: '**/libdarknetpy/vcpkg.json'
           doNotCache: false
 
       - name: Install deps
@@ -67,13 +67,13 @@ jobs:
           sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common wget zlib1g p7zip-full
           sudo apt-get clean
 
-      - name: 'Build Darknet'
+      - name: 'Build libdarknetpy'
         shell: pwsh
         env:
           VCPKG_DEFAULT_TRIPLET: ${{ matrix.VCPKG_DEFAULT_TRIPLET }}
         run: |
           pip install cmake
-          pip install --verbose ${{ github.workspace }}/darknet
+          pip install --verbose ${{ github.workspace }}/libdarknetpy
 
       - name: Build Standalone binary
         run: |
