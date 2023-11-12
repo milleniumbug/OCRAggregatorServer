@@ -6,7 +6,7 @@ on:
 
 env:
   py: "3.9"
-  vcpkgCommitId: '500c6f2b85e14411fe56a093ed5cd77177a6bfa9'
+  vcpkgCommitId: '61f610845fb206298a69f708104a51d651872877'
 
 
 jobs:
