@@ -24,8 +24,6 @@ wget -nv https://github.com/nikitalita/Bubble-detection-model/releases/download/
 unzip -o ImageTrans-Balloons-Model.zip
 rm ImageTrans-Balloons-Model.zip
 cd ..
-Remove-Item build -Recurse -Force
-Remove-Item dist -Recurse -Force
 pyinstaller --clean --additional-hooks-dir hooks --name "ocr_aggregator_server" standalone.py
 deactivate
 Remove-Item venv -Recurse -Force
