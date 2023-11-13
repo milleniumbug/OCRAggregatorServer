@@ -7,10 +7,10 @@ if ($env:OS -eq "Windows_NT") {
     $venv_scripts_dir = "bin"
 }
 
-if ($LIBDARKNETPY_PREFIX -eq $null || $LIBDARKNETPY_PREFIX -eq "") {
+if (${env:LIBDARKNETPY_PREFIX} -eq $null || ${env:LIBDARKNETPY_PREFIX} -eq "") {
     $LIBDARKNETPY_DIR = "../libdarknetpy"
 } else {
-    $LIBDARKNETPY_DIR = $LIBDARKNETPY_PREFIX + "/libdarknetpy"
+    $LIBDARKNETPY_DIR = ${env:LIBDARKNETPY_PREFIX} + "/libdarknetpy"
 }
 
 . "venv/$venv_scripts_dir/Activate.ps1"
