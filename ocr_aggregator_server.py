@@ -85,7 +85,7 @@ def create_darknet_detector(detection_sorter):
         MODEL_WEIGHTS,
         0, 
         1)
-    def process_detection(result):
+    def process_detection(result: list[m.bbox_t]):
         return [(box.x, box.y, box.x + box.w, box.y + box.h) for box in result]
 
     def detect(image_file):
