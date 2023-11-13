@@ -67,7 +67,7 @@ jobs:
       - name: Build Standalone binary
         env: 
           LIBDARKNETPY_PREFIX: ${{ github.workspace }}
-        run: ${{ github.workspace }}/OCRAggregatorServer/scripts/build-standalone.ps1
+        run: ${{ github.workspace }}/scripts/build-standalone.ps1
         shell: pwsh
 
       - name: Zip artifact
