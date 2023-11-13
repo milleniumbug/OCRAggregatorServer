@@ -10,7 +10,7 @@ import platform
 datas = [
     # ("/Users/nikita/.pyenv/versions/3.10.12/envs/OCRAS/lib/python3.10/site-packages/unidic_lite", "unidic_lite"),
     # ("/Users/nikita/.pyenv/versions/3.10.12/envs/OCRAS/lib/python3.10/site-packages/manga_ocr/assets", "assets"),
-    ("data", "data"),
+    # ("data", "data"),
 ]
 
 binaries = []

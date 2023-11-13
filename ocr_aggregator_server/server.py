@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 from typing import Union
 
@@ -12,20 +11,21 @@ import os
 
 #find the data directory
 cur_dir = os.path.dirname(os.path.realpath(__file__))
+
+print ("Current directory: {}".format(cur_dir))
 data_dir = os.path.join(cur_dir, "data")
-if os.path.exists(data_dir) and os.path.isdir(data_dir):
-    data_dir = data_dir
-else:
+if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
+    data_dir = os.path.normpath(os.path.join(cur_dir, "..", "data"))
+if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
     data_dir = os.path.join(cur_dir, "_internal/data")
-    
-if os.path.exists(data_dir) and os.path.isdir(data_dir):
-    data_dir = data_dir
-else:
+if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
     data_dir = "data"
 
 MODEL_CFG = os.path.join(data_dir, "model.cfg")
 MODEL_WEIGHTS = os.path.join(data_dir, "model.weights")
-    
+
+print("Using model.cfg: {}".format(MODEL_CFG))
+print("Using model.weights: {}".format(MODEL_WEIGHTS))
 
 def create_box_sorter():
     def sorter(image_file, detections: list[tuple[int, int, int, int]]):

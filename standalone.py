@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-from ocr_aggregator_server import main
-
 if __name__ == '__main__':
-    main()
+    import ocr_aggregator_server
+    ocr_aggregator_server.main()
