@@ -9,7 +9,6 @@ import io
 import cv2
 import np
 import os
-import libdarknetpy as m
 
 #find the data directory
 cur_dir = os.path.dirname(os.path.realpath(__file__))
