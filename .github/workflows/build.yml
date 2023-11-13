@@ -8,7 +8,6 @@ env:
   py: "3.9"
   vcpkgCommitId: '61f610845fb206298a69f708104a51d651872877'
 
-
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -17,17 +16,11 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            venv_scripts_dir: "Scripts"
             VCPKG_DEFAULT_TRIPLET: "x64-windows-static-md"
-            darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
           - os: macOS-latest
-            venv_scripts_dir: "bin"
             VCPKG_DEFAULT_TRIPLET: "x64-osx"
-            darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
           - os: ubuntu-latest
             VCPKG_DEFAULT_TRIPLET: "x64-linux"
-            venv_scripts_dir: "bin"
-            darknet_build_args: "-UseVCPKG -ForceLocalVCPKG -DoNotUpdateVCPKG -EnableOPENCV"
 
     steps:
       - uses: actions/checkout@v3
@@ -71,31 +64,10 @@ jobs:
           sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common wget zlib1g p7zip-full
           sudo apt-get clean
 
-      # - name: 'Build libdarknetpy'
-      #   shell: pwsh
-      #   env:
-      #     VCPKG_DEFAULT_TRIPLET: ${{ matrix.VCPKG_DEFAULT_TRIPLET }}
-      #   run: |
-      #     pip install cmake
-      #     pip install --verbose ${{ github.workspace }}/libdarknetpy
-
       - name: Build Standalone binary
-        run: |
-          python -m venv venv
-          venv/${{matrix.venv_scripts_dir}}/Activate.ps1
-          python -m pip install cmake
-          pip install --verbose ${{ github.workspace }}/libdarknetpy
-          python -m pip install -r requirements.txt
-          python -m pip install .
-          python -m pip install pyinstaller
-          cd data
-          wget -nv https://github.com/nikitalita/Bubble-detection-model/releases/download/0.0.1/ImageTrans-Balloons-Model.zip
-          unzip ImageTrans-Balloons-Model.zip
-          rm ImageTrans-Balloons-Model.zip
-          cd ..
-          pyinstaller --clean --additional-hooks-dir hooks --name "ocr_aggregator_server" standalone.py
-          deactivate
-          Remove-Item venv -Recurse -Force
+        env: 
+          LIBDARKNETPY_PREFIX: ${{ github.workspace }}
+        run: ${{ github.workspace }}/libdarknetpy/scripts/build-standalone.ps1
         shell: pwsh
 
       - name: Zip artifact

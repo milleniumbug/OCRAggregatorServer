@@ -13,9 +13,10 @@ import os
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 
 print ("Current directory: {}".format(cur_dir))
-data_dir = os.path.join(cur_dir, "data")
+
+data_dir = os.path.normpath(os.path.join(cur_dir, "..", "data"))
 if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
-    data_dir = os.path.normpath(os.path.join(cur_dir, "..", "data"))
+    data_dir = os.path.normpath(os.path.join(cur_dir, "data"))
 if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
     data_dir = os.path.join(cur_dir, "_internal/data")
 if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
