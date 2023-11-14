@@ -1,0 +1,85 @@
+name: Test on GH actions environment
+
+on: 
+  - push
+  - pull_request
+
+env:
+  py: "3.9"
+  vcpkgCommitId: '61f610845fb206298a69f708104a51d651872877'
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            VCPKG_DEFAULT_TRIPLET: "x64-windows-static-md"
+          - os: macOS-latest
+            VCPKG_DEFAULT_TRIPLET: "x64-osx"
+          - os: ubuntu-latest
+            VCPKG_DEFAULT_TRIPLET: "x64-linux"
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.py }}
+
+      - uses: lukka/get-cmake@latest
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@main
+        id: runvcpkg
+        with:
+          # This specifies the location of vcpkg, where it is going to be restored from cache, or create from scratch.
+          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          # The Git commit id of vcpkg to be checked out. This is only needed because we are not using a submodule.
+          vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
+          # The vcpkg.json file, which will be part of cache key computation.
+          vcpkgJsonGlob: '**/libdarknetpy/vcpkg.json'
+          doNotCache: false
+
+      - name: Install deps
+        run: choco install wget 7zip
+        if: matrix.os == 'windows-latest'  
+
+      - name: Install deps
+        run: brew install yasm nasm pkg-config 7zip wget
+        if: matrix.os == 'macOS-latest'
+
+      # We also run out of space on ubuntu if we don't do an apt-get clean after installing
+      - name: Update apt and install deps
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt update
+          sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common wget zlib1g p7zip-full
+          sudo apt-get clean
+
+      - name: Build Standalone binary
+        run: ${{ github.workspace }}/scripts/build-standalone.ps1
+        shell: pwsh
+
+        # We need to clean before zipping or we might run out of space on the runners
+      - name: Clean
+        run: |
+          mv dist dist_tmp
+          ${{ github.workspace }}/scripts/build-clean.ps1
+          mv dist_tmp dist
+
+      - name: Zip artifact
+        run: |
+          cd ${{ github.workspace }}/dist
+          7z a -r ocr_aggregator_server_${{ matrix.os }}.zip ocr_aggregator_server
+        shell: pwsh
+
+      - uses: actions/upload-artifact@v2
+        continue-on-error: true
+        with:
+          name: ocr_aggregator_server_${{ matrix.os }}
+          path: ${{ github.workspace }}/dist/ocr_aggregator_server_${{ matrix.os }}.zip

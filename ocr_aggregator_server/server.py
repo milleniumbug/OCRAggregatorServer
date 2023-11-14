@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 import argparse
 from typing import Union
 
@@ -8,25 +7,92 @@ import PIL.Image
 import io
 import cv2
 import np
+import os
 
+#find the data directory
+cur_dir = os.path.dirname(os.path.realpath(__file__))
 
-def create_y_coordinate_sorter():
-    def sorter(image_file, detections):
-        return sorted(detections, key=lambda d: d[1])
+print ("Current directory: {}".format(cur_dir))
 
+data_dir = os.path.normpath(os.path.join(cur_dir, "..", "data"))
+if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
+    data_dir = os.path.normpath(os.path.join(cur_dir, "data"))
+if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
+    data_dir = os.path.join(cur_dir, "_internal/data")
+if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
+    data_dir = "data"
+
+MODEL_CFG = os.path.join(data_dir, "model.cfg")
+MODEL_WEIGHTS = os.path.join(data_dir, "model.weights")
+
+print("Using model.cfg: {}".format(MODEL_CFG))
+print("Using model.weights: {}".format(MODEL_WEIGHTS))
+
+def create_box_sorter():
+    def sorter(image_file, detections: list[tuple[int, int, int, int]]):
+        # what we need to do is to sort the detections by their y coordinate, and then their x coordinate
+        # We find all the detections that have y coordinates that overlap by more than 50% of their height
+        # We then sort those detections by their x coordinate
+        # We then repeat this process until all detections are sorted
+    
+        # first we sort the detections by their y coordinate
+        detections.sort(key=lambda x: x[1])
+
+        detection_lists :list[list[tuple]] = []
+        
+        for detection in detections:
+            added = False
+            
+            # we will iterate through the list of lists
+            for detection_list in detection_lists:
+                # we will check if the detection overlaps with any of the detections in the list
+                for detection_in_list in detection_list:
+                    # we will check if the detection overlaps with the detection in the list by more than 50 percent
+                    if (detection[1] >= detection_in_list[1] and detection[1] <= detection_in_list[3]) or (detection[3] >= detection_in_list[1] and detection[3] <= detection_in_list[3]):
+                        overlap_start = max(detection[1], detection_in_list[1])
+                        overlap_end = min(detection[3], detection_in_list[3])
+                        overlap_height = overlap_end - overlap_start
+                        detection_height = detection[3] - detection[1]
+                        detection_in_list_height = detection_in_list[3] - detection_in_list[1]
+                        if overlap_height / detection_height >= 0.5 or overlap_height / detection_in_list_height >= 0.5:
+                            detection_list.append(detection)
+                            added = True
+                            break
+                if added:
+                    break
+            
+            if not added:
+                # we have not added the detection to a list
+                # we will create a new list and add the detection to it
+                detection_lists.append([detection])
+                
+        #sort by the x2 coordinate in reverse order
+        for detection_list in detection_lists:
+            detection_list.sort(key=lambda x: x[2], reverse=True)
+            
+        # cat them all together
+        sorted_detections = []
+        for detection_list in detection_lists:
+            sorted_detections += detection_list
+        
+        return sorted_detections
     return sorter
 
 
 def create_darknet_detector(detection_sorter):
-    import darknet
-    Detector = darknet.load_darknet_detector()
-    detector = Detector(
-        'data/model.cfg',
-        'data/model.weights',
-        0)
+    import libdarknetpy as m
+    detector = m.Detector(
+        MODEL_CFG,
+        MODEL_WEIGHTS,
+        0, 
+        1)
+    def process_detection(result: list[m.bbox_t]):
+        return [(box.x, box.y, box.x + box.w, box.y + box.h) for box in result]
 
     def detect(image_file):
-        result = detector.detect(image_file)
+        bytes_read = image_file.read()
+        input_image = list(bytes_read)
+        result = process_detection(detector.detect_raw(input_image))
         return [(x1 - 10, y1 - 10, x2 + 10, y2 + 10) for x1, y1, x2, y2 in detection_sorter(image_file, result)]
 
     return detect
@@ -96,7 +162,7 @@ def create_engines(
         detection_sorter_mode: str):
 
     if detection_sorter_mode == 'y_coordinate':
-        sorter = create_y_coordinate_sorter()
+        sorter = create_box_sorter()
 
     if ocr_mode == 'manga-ocr':
         ocr = create_manga_ocr()
