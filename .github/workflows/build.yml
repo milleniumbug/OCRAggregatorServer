@@ -24,11 +24,8 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - name: checkout libdarknetpy
-        uses: actions/checkout@v3
         with:
-          path: libdarknetpy
-          repository: nikitalita/libdarknetpy
+          submodules: true
 
       - name: Set up Python
         uses: actions/setup-python@v4
