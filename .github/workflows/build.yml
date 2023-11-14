@@ -50,7 +50,7 @@ jobs:
         if: matrix.os == 'windows-latest'  
 
       - name: Install deps
-        run: brew install libomp yasm nasm pkg-config 7zip wget
+        run: brew install yasm nasm pkg-config 7zip wget
         if: matrix.os == 'macOS-latest'
 
       # We also run out of space on ubuntu if we don't do an apt-get clean after installing
@@ -62,8 +62,6 @@ jobs:
           sudo apt-get clean
 
       - name: Build Standalone binary
-        env: 
-          LIBDARKNETPY_PREFIX: ${{ github.workspace }}
         run: ${{ github.workspace }}/scripts/build-standalone.ps1
         shell: pwsh
 

@@ -35,10 +35,8 @@ $venv_activate = "$venv_dir/$venv_scripts_dir/Activate.ps1"
 $data_dir = "$parent_dir/data"
 $balloon_model_zip = "$data_dir/ImageTrans-Balloons-Model.zip"
 
-if (${env:LIBDARKNETPY_PREFIX} -eq $null || ${env:LIBDARKNETPY_PREFIX} -eq "") {
+if (${env:LIBDARKNETPY_DIR} -eq $null || ${env:LIBDARKNETPY_DIR} -eq "") {
     $LIBDARKNETPY_DIR = "$parent_dir/libdarknetpy"
-} else {
-    $LIBDARKNETPY_DIR = "${env:LIBDARKNETPY_PREFIX}/libdarknetpy"
 }
 
 # check if venv exists
@@ -65,7 +63,6 @@ python -m pip install pyinstaller
 
 # check if model.cfg, model.weights, and model.json exist
 if ( -not (Test-Path "$data_dir/model.cfg") -or -not (Test-Path "$data_dir/model.weights") -or -not (Test-Path "$data_dir/model.json")) {
-    New-Item -Path "$parent_dir" -Name "$data_dir" -ItemType "directory" -Force
     # download model
     wget -nv "https://github.com/nikitalita/Bubble-detection-model/releases/download/0.0.1/ImageTrans-Balloons-Model.zip" -O "$balloon_model_zip"
     Expand-Archive -Force -Path "$balloon_model_zip" -DestinationPath "$data_dir"
