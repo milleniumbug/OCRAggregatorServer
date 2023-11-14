@@ -65,6 +65,13 @@ jobs:
         run: ${{ github.workspace }}/scripts/build-standalone.ps1
         shell: pwsh
 
+        # We need to clean before zipping or we might run out of space on the runners
+      - name: Clean
+        run: |
+          mv dist dist_tmp
+          ${{ github.workspace }}/scripts/build-clean.ps1
+          mv dist_tmp dist
+
       - name: Zip artifact
         run: |
           cd ${{ github.workspace }}/dist

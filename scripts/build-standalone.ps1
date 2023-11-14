@@ -57,6 +57,7 @@ if ( -not (Test-Path $LIBDARKNETPY_DIR)) {
     # update
     git -C $LIBDARKNETPY_DIR pull
 }
+pip install cmake
 pip install --verbose "$LIBDARKNETPY_DIR"
 python -m pip install $parent_dir
 python -m pip install pyinstaller
