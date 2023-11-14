@@ -71,6 +71,7 @@ jobs:
           mv dist dist_tmp
           ${{ github.workspace }}/scripts/build-clean.ps1
           mv dist_tmp dist
+        shell: pwsh
 
       - name: Zip artifact
         run: |
