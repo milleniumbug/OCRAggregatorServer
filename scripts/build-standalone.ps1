@@ -71,7 +71,7 @@ python -m pip install pyinstaller
 # check if model.cfg, model.weights, and model.json exist
 if ( -not (Test-Path "$data_dir/model.cfg") -or -not (Test-Path "$data_dir/model.weights") -or -not (Test-Path "$data_dir/model.json")) {
     # download model
-    wget -nv "https://github.com/nikitalita/Bubble-detection-model/releases/download/0.0.1/ImageTrans-Balloons-Model.zip" -O "$balloon_model_zip"
+    Invoke-WebRequest "https://github.com/nikitalita/Bubble-detection-model/releases/download/0.0.1/ImageTrans-Balloons-Model.zip" -O "$balloon_model_zip"
     Expand-Archive -Force -Path "$balloon_model_zip" -DestinationPath "$data_dir"
     Remove-Item "$balloon_model_zip"
 }
