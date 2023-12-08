@@ -42,7 +42,13 @@ if (${env:LIBDARKNETPY_DIR} -eq $null || ${env:LIBDARKNETPY_DIR} -eq "") {
 # check if venv exists
 if ( -not (Test-Path $venv_dir)) {
     & $python_command -m venv $venv_dir
-} elseif ( -not (Test-Path $venv_activate)) {
+} 
+if ( -not (Test-Path $venv_dir)) {
+    # fail
+    Write-Host "venv failed to create!"
+    exit 1
+}
+if ( -not (Test-Path $venv_activate)) {
     # fail
     Write-Host "venv exists but Activate.ps1 does not exist!"
     Write-Host "Please remove the venv directory and try again."
