@@ -6,7 +6,7 @@ on:
 
 env:
   py: "3.9"
-  vcpkgCommitId: '61f610845fb206298a69f708104a51d651872877'
+  vcpkgCommitId: '69860f9b4c0522e82fd0d6260015339a097040e0'
 
 jobs:
   test:
@@ -17,10 +17,13 @@ jobs:
         include:
           - os: windows-latest
             VCPKG_DEFAULT_TRIPLET: "x64-windows-static-md"
+            VCPKG_DIR: "D:\\vcpkg"
           - os: macOS-latest
             VCPKG_DEFAULT_TRIPLET: "x64-osx"
+            VCPKG_DIR: '${{ github.workspace }}/vcpkg'
           - os: ubuntu-latest
             VCPKG_DEFAULT_TRIPLET: "x64-linux"
+            VCPKG_DIR: '${{ github.workspace }}/vcpkg'
 
     steps:
       - uses: actions/checkout@v3
@@ -38,7 +41,7 @@ jobs:
         id: runvcpkg
         with:
           # This specifies the location of vcpkg, where it is going to be restored from cache, or create from scratch.
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgDirectory: ${{ matrix.VCPKG_DIR }}
           # The Git commit id of vcpkg to be checked out. This is only needed because we are not using a submodule.
           vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
           # The vcpkg.json file, which will be part of cache key computation.
