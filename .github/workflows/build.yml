@@ -46,7 +46,7 @@ jobs:
           vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
           # The vcpkg.json file, which will be part of cache key computation.
           vcpkgJsonGlob: '**/libdarknetpy/vcpkg.json'
-          doNotCache: false
+          doNotCache: true
 
       - name: Install deps
         run: choco install 7zip
