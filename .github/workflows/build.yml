@@ -20,10 +20,10 @@ jobs:
             VCPKG_DIR: "D:\\vcpkg"
           - os: macOS-latest
             VCPKG_DEFAULT_TRIPLET: "x64-osx"
-            VCPKG_DIR: '${{ github.workspace }}/vcpkg'
+            VCPKG_DIR: '/tmp/vcpkg'
           - os: ubuntu-latest
             VCPKG_DEFAULT_TRIPLET: "x64-linux"
-            VCPKG_DIR: '${{ github.workspace }}/vcpkg'
+            VCPKG_DIR: '/tmp/vcpkg'
 
     steps:
       - uses: actions/checkout@v3
