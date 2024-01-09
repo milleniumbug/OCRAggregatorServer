@@ -45,7 +45,7 @@ jobs:
           # The Git commit id of vcpkg to be checked out. This is only needed because we are not using a submodule.
           vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
           # The vcpkg.json file, which will be part of cache key computation.
-          vcpkgJsonGlob: '**/libdarknetpy/vcpkg.json'
+          vcpkgJsonGlob: 'krjg[oeirhgperaodighpdasoighadspoighp]'
           doNotCache: true
 
       - name: Install deps
