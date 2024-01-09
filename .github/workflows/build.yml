@@ -6,7 +6,7 @@ on:
 
 env:
   py: "3.9"
-  vcpkgCommitId: '69860f9b4c0522e82fd0d6260015339a097040e0'
+  vcpkgCommitId: '4e9fefefc5229e15881dd8ad6571265f53d821c6'
 
 jobs:
   test:
@@ -45,8 +45,8 @@ jobs:
           # The Git commit id of vcpkg to be checked out. This is only needed because we are not using a submodule.
           vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
           # The vcpkg.json file, which will be part of cache key computation.
-          vcpkgJsonGlob: 'krjg[oeirhgperaodighpdasoighadspoighp]'
-          doNotCache: true
+          vcpkgJsonGlob: '**/libdarknetpy/vcpkg.json'
+          doNotCache: false
 
       - name: Install deps
         run: choco install 7zip
