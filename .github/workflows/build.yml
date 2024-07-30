@@ -6,8 +6,9 @@ on:
 
 env:
   py: "3.9"
-  vcpkgCommitId: '61f610845fb206298a69f708104a51d651872877'
+  vcpkgCommitId: '4e9fefefc5229e15881dd8ad6571265f53d821c6'
 
+  
 jobs:
   test:
     runs-on: ${{ matrix.os }}
@@ -17,10 +18,13 @@ jobs:
         include:
           - os: windows-latest
             VCPKG_DEFAULT_TRIPLET: "x64-windows-static-md"
+            VCPKG_DIR: "D:\\vcpkg"
           - os: macOS-latest
             VCPKG_DEFAULT_TRIPLET: "x64-osx"
+            VCPKG_DIR: '/tmp/vcpkg'
           - os: ubuntu-latest
             VCPKG_DEFAULT_TRIPLET: "x64-linux"
+            VCPKG_DIR: '/tmp/vcpkg'
 
     steps:
       - uses: actions/checkout@v3
@@ -38,7 +42,7 @@ jobs:
         id: runvcpkg
         with:
           # This specifies the location of vcpkg, where it is going to be restored from cache, or create from scratch.
-          vcpkgDirectory: '${{ github.workspace }}/vcpkg'
+          vcpkgDirectory: ${{ matrix.VCPKG_DIR }}
           # The Git commit id of vcpkg to be checked out. This is only needed because we are not using a submodule.
           vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
           # The vcpkg.json file, which will be part of cache key computation.
@@ -46,11 +50,11 @@ jobs:
           doNotCache: false
 
       - name: Install deps
-        run: choco install wget 7zip
+        run: choco install 7zip
         if: matrix.os == 'windows-latest'  
 
       - name: Install deps
-        run: brew install yasm nasm pkg-config 7zip wget
+        run: brew install yasm nasm pkg-config 7zip
         if: matrix.os == 'macOS-latest'
 
       # We also run out of space on ubuntu if we don't do an apt-get clean after installing
@@ -58,7 +62,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common wget zlib1g p7zip-full
+          sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common zlib1g p7zip-full
           sudo apt-get clean
 
       - name: Build Standalone binary
@@ -71,6 +75,7 @@ jobs:
           mv dist dist_tmp
           ${{ github.workspace }}/scripts/build-clean.ps1
           mv dist_tmp dist
+        shell: pwsh
 
       - name: Zip artifact
         run: |

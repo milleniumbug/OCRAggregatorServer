@@ -42,7 +42,13 @@ if (${env:LIBDARKNETPY_DIR} -eq $null || ${env:LIBDARKNETPY_DIR} -eq "") {
 # check if venv exists
 if ( -not (Test-Path $venv_dir)) {
     & $python_command -m venv $venv_dir
-} elseif ( -not (Test-Path $venv_activate)) {
+} 
+if ( -not (Test-Path $venv_dir)) {
+    # fail
+    Write-Host "venv failed to create!"
+    exit 1
+}
+if ( -not (Test-Path $venv_activate)) {
     # fail
     Write-Host "venv exists but Activate.ps1 does not exist!"
     Write-Host "Please remove the venv directory and try again."
@@ -65,7 +71,7 @@ python -m pip install pyinstaller
 # check if model.cfg, model.weights, and model.json exist
 if ( -not (Test-Path "$data_dir/model.cfg") -or -not (Test-Path "$data_dir/model.weights") -or -not (Test-Path "$data_dir/model.json")) {
     # download model
-    wget -nv "https://github.com/nikitalita/Bubble-detection-model/releases/download/0.0.1/ImageTrans-Balloons-Model.zip" -O "$balloon_model_zip"
+    Invoke-WebRequest "https://github.com/nikitalita/Bubble-detection-model/releases/download/0.0.1/ImageTrans-Balloons-Model.zip" -O "$balloon_model_zip"
     Expand-Archive -Force -Path "$balloon_model_zip" -DestinationPath "$data_dir"
     Remove-Item "$balloon_model_zip"
 }
