@@ -5,9 +5,7 @@ on:
   - pull_request
 
 env:
-  py: "3.9"
-  vcpkgCommitId: '4e9fefefc5229e15881dd8ad6571265f53d821c6'
-
+  py: "3.13"
   
 jobs:
   test:
@@ -17,37 +15,18 @@ jobs:
       matrix:
         include:
           - os: windows-latest
-            VCPKG_DEFAULT_TRIPLET: "x64-windows-static-md"
-            VCPKG_DIR: "D:\\vcpkg"
           - os: macOS-latest
-            VCPKG_DEFAULT_TRIPLET: "x64-osx"
-            VCPKG_DIR: '/tmp/vcpkg'
           - os: ubuntu-latest
-            VCPKG_DEFAULT_TRIPLET: "x64-linux"
-            VCPKG_DIR: '/tmp/vcpkg'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: true
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
           python-version: ${{ env.py }}
-
-      - uses: lukka/get-cmake@latest
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@main
-        id: runvcpkg
-        with:
-          # This specifies the location of vcpkg, where it is going to be restored from cache, or create from scratch.
-          vcpkgDirectory: ${{ matrix.VCPKG_DIR }}
-          # The Git commit id of vcpkg to be checked out. This is only needed because we are not using a submodule.
-          vcpkgGitCommitId: '${{ env.vcpkgCommitId }}'
-          # The vcpkg.json file, which will be part of cache key computation.
-          vcpkgJsonGlob: '**/libdarknetpy/vcpkg.json'
-          doNotCache: false
 
       - name: Install deps
         run: choco install 7zip
@@ -62,12 +41,18 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt update
-          sudo apt-get install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common zlib1g p7zip-full
-          sudo apt-get clean
+          sudo apt install -y yasm nasm gperf libgles2-mesa-dev libx11-dev libxft-dev libxext-dev libxrandr-dev libxi-dev libxcursor-dev libxdamage-dev libxinerama-dev libdbus-1-dev libxtst-dev build-essential g++ apt-transport-https ca-certificates gnupg software-properties-common zlib1g p7zip-full
+          sudo apt clean
+
+      - name: print disk space
+        shell: bash
+        run: df -h || echo "df -h failed"
 
       - name: Build Standalone binary
-        run: ${{ github.workspace }}/scripts/build-standalone.ps1
         shell: pwsh
+        env:
+          IS_CI: true
+        run: ${{ github.workspace }}/scripts/build-standalone.ps1
 
         # We need to clean before zipping or we might run out of space on the runners
       - name: Clean
@@ -83,7 +68,7 @@ jobs:
           7z a -r ocr_aggregator_server_${{ matrix.os }}.zip ocr_aggregator_server
         shell: pwsh
 
-      - uses: actions/upload-artifact@v2
+      - uses: actions/upload-artifact@v6
         continue-on-error: true
         with:
           name: ocr_aggregator_server_${{ matrix.os }}

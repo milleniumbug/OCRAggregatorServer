@@ -101,4 +101,5 @@ ENV/
 data/
 .DS_Store
 
-libdarknetpy/
+libdarknetpy
+test-output/

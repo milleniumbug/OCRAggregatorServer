@@ -8,8 +8,6 @@ from PyInstaller.utils.hooks import (collect_data_files, collect_dynamic_libs,
 import platform
 
 datas = [
-    # ("/Users/nikita/.pyenv/versions/3.10.12/envs/OCRAS/lib/python3.10/site-packages/unidic_lite", "unidic_lite"),
-    # ("/Users/nikita/.pyenv/versions/3.10.12/envs/OCRAS/lib/python3.10/site-packages/manga_ocr/assets", "assets"),
     ("data", "data"),
 ]
 

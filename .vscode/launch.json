@@ -13,10 +13,20 @@
             "justMyCode": false
         },
         {
-            "name": "Python: Current File",
+            "name": "Python: OCR Server Test Image",
             "type": "python",
             "request": "launch",
-            "program": "${file}",
+            "program": "${workspaceFolder}/standalone.py",
+            "args": ["--test-image", "${workspaceFolder}/test/00016.jpeg", "--test-image-output", "${workspaceFolder}/test-output"],
+            "console": "integratedTerminal",
+            "justMyCode": false
+        },
+
+        {
+            "name": "Python: test.py",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/test/test.py",
             "console": "integratedTerminal",
             "cwd": "${workspaceFolder}",
             "justMyCode": false

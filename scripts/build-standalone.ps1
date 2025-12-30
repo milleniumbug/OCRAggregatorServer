@@ -35,10 +35,6 @@ $venv_activate = "$venv_dir/$venv_scripts_dir/Activate.ps1"
 $data_dir = "$parent_dir/data"
 $balloon_model_zip = "$data_dir/ImageTrans-Balloons-Model.zip"
 
-if (${env:LIBDARKNETPY_DIR} -eq $null || ${env:LIBDARKNETPY_DIR} -eq "") {
-    $LIBDARKNETPY_DIR = "$parent_dir/libdarknetpy"
-}
-
 # check if venv exists
 if ( -not (Test-Path $venv_dir)) {
     & $python_command -m venv $venv_dir
@@ -54,27 +50,36 @@ if ( -not (Test-Path $venv_activate)) {
     Write-Host "Please remove the venv directory and try again."
     exit 1
 }
-. "$venv_dir/$venv_scripts_dir/Activate.ps1"
+. "$venv_activate"
 
-# check if libdarknetpy exists in parent_dir
-if ( -not (Test-Path $LIBDARKNETPY_DIR)) {
-    git clone "https://github.com/nikitalita/libdarknetpy.git" $LIBDARKNETPY_DIR
-} else {
-    # update
-    git -C $LIBDARKNETPY_DIR pull
-}
-pip install cmake
-pip install --verbose "$LIBDARKNETPY_DIR"
 python -m pip install $parent_dir
 python -m pip install pyinstaller
 
-# check if model.cfg, model.weights, and model.json exist
-if ( -not (Test-Path "$data_dir/model.cfg") -or -not (Test-Path "$data_dir/model.weights") -or -not (Test-Path "$data_dir/model.json")) {
-    # download model
-    Invoke-WebRequest "https://github.com/nikitalita/Bubble-detection-model/releases/download/0.0.1/ImageTrans-Balloons-Model.zip" -O "$balloon_model_zip"
-    Expand-Archive -Force -Path "$balloon_model_zip" -DestinationPath "$data_dir"
-    Remove-Item "$balloon_model_zip"
+if ($env:IS_CI) {
+    # if we're not on windows, run `df -h`
+    if ($env:OS -ne "Windows_NT") {
+        Write-Host "**** Disk space before build:"
+        df -h
+        Write-Host "**** Disk space used in venv:"
+        du -hs $venv_dir
+    }
+    Write-Host "Purging pip cache..."
+    python -m pip cache purge
+
+    if ($env:OS -ne "Windows_NT") {
+        Write-Host "**** Disk space before build (after pip cache purge):"
+        df -h
+    }
 }
+
+# We probably don't need this for the standalone build now.
+# check if model.cfg, model.weights, and model.json exist
+# if ( -not (Test-Path "$data_dir/model.cfg") -or -not (Test-Path "$data_dir/model.weights") -or -not (Test-Path "$data_dir/model.json")) {
+#     # download model
+#     Invoke-WebRequest "https://github.com/nikitalita/Bubble-detection-model/releases/download/0.0.1/ImageTrans-Balloons-Model.zip" -OutFile "$balloon_model_zip"
+#     Expand-Archive -Force -Path "$balloon_model_zip" -DestinationPath "$data_dir"
+#     Remove-Item "$balloon_model_zip"
+# }
 
 pyinstaller --noconfirm --clean --additional-hooks-dir hooks --name "ocr_aggregator_server" "$parent_dir/standalone.py"
 deactivate

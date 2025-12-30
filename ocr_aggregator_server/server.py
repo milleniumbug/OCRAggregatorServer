@@ -5,28 +5,18 @@ from flask import Flask, jsonify, request
 from flask_cors import CORS
 import PIL.Image
 import io
-import cv2
-import np
 import os
+from .util import get_data_dir
 
 #find the data directory
 cur_dir = os.path.dirname(os.path.realpath(__file__))
 
 print ("Current directory: {}".format(cur_dir))
 
-data_dir = os.path.normpath(os.path.join(cur_dir, "..", "data"))
-if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
-    data_dir = os.path.normpath(os.path.join(cur_dir, "data"))
-if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
-    data_dir = os.path.join(cur_dir, "_internal/data")
-if not (os.path.exists(data_dir) and os.path.isdir(data_dir)):
-    data_dir = "data"
+data_dir = get_data_dir()
 
-MODEL_CFG = os.path.join(data_dir, "model.cfg")
-MODEL_WEIGHTS = os.path.join(data_dir, "model.weights")
+print("Data directory: {}".format(data_dir))
 
-print("Using model.cfg: {}".format(MODEL_CFG))
-print("Using model.weights: {}".format(MODEL_WEIGHTS))
 
 def create_box_sorter():
     def sorter(image_file, detections: list[tuple[int, int, int, int]]):
@@ -80,23 +70,50 @@ def create_box_sorter():
 
 
 def create_darknet_detector(detection_sorter):
-    import libdarknetpy as m
-    detector = m.Detector(
+    from .darknet import load_darknet_detector
+    MODEL_CFG = os.path.join(data_dir, "model.cfg")
+    MODEL_WEIGHTS = os.path.join(data_dir, "model.weights")
+
+    print("Darknet: Using model.cfg: {}".format(MODEL_CFG))
+    print("Darknet: Using model.weights: {}".format(MODEL_WEIGHTS))
+
+    Detector = load_darknet_detector()
+    detector = Detector(
         MODEL_CFG,
         MODEL_WEIGHTS,
-        0, 
-        1)
-    def process_detection(result: list[m.bbox_t]):
-        return [(box.x, box.y, box.x + box.w, box.y + box.h) for box in result]
+        0)
 
     def detect(image_file):
-        bytes_read = image_file.read()
-        input_image = list(bytes_read)
-        result = process_detection(detector.detect_raw(input_image))
+        result = detector.detect(image_file)
         return [(x1 - 10, y1 - 10, x2 + 10, y2 + 10) for x1, y1, x2, y2 in detection_sorter(image_file, result)]
 
     return detect
 
+def create_ogkalu_detector(detection_sorter, confidence_threshold=0.3):
+    from . import ogkalu
+    from onnxruntime import InferenceSession
+    from huggingface_hub import hf_hub_download
+    
+    model_name = "ogkalu/comic-text-and-bubble-detector"
+    model_filename = "detector.onnx"
+    # download the config.json file first
+    hf_hub_download(repo_id=model_name, filename='config.json')
+    model_path: str = hf_hub_download(
+        repo_id=model_name,
+        filename=model_filename
+    )
+    session: InferenceSession = InferenceSession(model_path)
+    
+    def process_detection(result):
+        return [(int(box[0]), int(box[1]), int(box[2]), int(box[3])) for box in result]
+
+    def detect(image_file):
+        text_boxes = ogkalu.detect(image_file, session, confidence_threshold)
+        result = process_detection(text_boxes)
+        return [(x1, y1, x2, y2) for x1, y1, x2, y2 in detection_sorter(image_file, result)]
+
+
+    return detect
 
 def create_manga_ocr():
     from manga_ocr import MangaOcr
@@ -159,7 +176,8 @@ def create_engines(
         ocr_mode: str,
         detector_mode: str,
         combined_mode: Union[str, None],
-        detection_sorter_mode: str):
+        detection_sorter_mode: str,
+        confidence_threshold: float):
 
     if detection_sorter_mode == 'y_coordinate':
         sorter = create_box_sorter()
@@ -173,10 +191,16 @@ def create_engines(
     else:
         ocr = None
 
+    detector = None
     if detector_mode == 'darknet':
-        detector = create_darknet_detector(sorter)
-    else:
-        detector = None
+        try:
+            detector = create_darknet_detector(sorter)
+        except Exception as e:
+            print(f"Error creating darknet detector: {e}")
+            print(f"Falling back to ogkalu detector")
+            detector = None
+    if detector is None:
+        detector = create_ogkalu_detector(sorter, confidence_threshold)
 
     if combined_mode is None:
         combined_detector_ocr = create_combined_detector_ocr(ocr, detector)
@@ -215,22 +239,61 @@ def create_app(ocr, detector, combined_detector_ocr, config=None):
 
     return app
 
+def test_image(image_path, output_dir, combined_detector_ocr):
+    import json
+    from .util import draw_boxes_on_image
+    image_paths = []
+    # check if the image path is a directory or a file
+    if os.path.isdir(image_path):
+        # get all the pngs, jpegs, and jpgs in the directory
+        for file in os.listdir(image_path):
+            if file.endswith('.png') or file.endswith('.jpg') or file.endswith('.jpeg'):
+                image_file = os.path.join(image_path, file)
+                image_paths.append(image_file)
+    else:
+        image_paths.append(image_path)
+    for image_path in image_paths:
+        with open(image_path, 'rb') as image_file:
+            ret = combined_detector_ocr(image_file)
+            print(json.dumps(ret, ensure_ascii=False))
+            ext = os.path.splitext(image_path)[-1]
+            image_file_name = os.path.basename(image_path)
+            output_file = os.path.join(output_dir, image_file_name.replace(ext, f'_detected_combined.png'))
+            image = draw_boxes_on_image(image_path, ret)
+            #ensure dir
+            os.makedirs(output_dir, exist_ok=True)
+            image.save(output_file)
+    return 0
+
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--host", action="store", default="127.0.0.1")
     parser.add_argument("--port", action="store", default="8000")
-    parser.add_argument("--detection-mode", action="store", default="darknet")
+    parser.add_argument("--detection-mode", action="store", default="ogkalu")
     parser.add_argument("--ocr-mode", action="store", default="manga-ocr")
     parser.add_argument("--combined-detection-ocr-mode", action="store", default=None)
     parser.add_argument("--detection-ordering-mode", action="store", default='y_coordinate')
+    parser.add_argument("--confidence-threshold", action="store", default=0.3, help="The confidence threshold for the ogkalu detector")
+    parser.add_argument("--test-image", action="store", default=None, help="Run the combined detection and OCR on the test image and then exit")
+    parser.add_argument("--test-image-output", action="store", default=None, help="Output the test image to the specified file")
 
     args = parser.parse_args()
     ocr, detector, combined_detector_ocr = create_engines(
         args.ocr_mode,
         args.detection_mode,
         args.combined_detection_ocr_mode,
-        args.detection_ordering_mode)
+        args.detection_ordering_mode,
+        float(args.confidence_threshold))
+    if args.test_image is not None:
+        image_path = args.test_image
+        if args.test_image_output is not None:
+            output_dir = args.test_image_output
+        else:
+            output_dir = os.path.dirname(image_path)
+        test_image(image_path, output_dir, combined_detector_ocr)
+        return 0
+
     created_app = create_app(ocr, detector, combined_detector_ocr)
     created_app.run(host=args.host, port=args.port, use_reloader=False)
 
